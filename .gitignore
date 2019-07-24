@@ -14,3 +14,4 @@
 build
 .envrc
 package.yaml
+out
