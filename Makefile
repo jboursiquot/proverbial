@@ -21,9 +21,13 @@ bucket:
 
 build:
 	GOOS=linux GOARCH=amd64 go build -v -o ./build/proverbial ./cmd/proverbial
+	GOOS=linux GOARCH=amd64 go build -v -o ./build/checker ./cmd/checker
+	GOOS=linux GOARCH=amd64 go build -v -o ./build/picker ./cmd/picker
 
 zip:
 	@cd ./build && zip proverbial.zip proverbial
+	@cd ./build && zip checker.zip checker
+	@cd ./build && zip picker.zip picker
 
 package: test build zip
 	sam validate --template $(CF_TEMPLATE)
@@ -54,3 +58,10 @@ describe:
 	aws cloudformation describe-stacks \
 		--stack-name $(STACK_NAME) \
 		--output json
+
+FN ?= unspecified
+
+pick:
+	aws lambda invoke --function-name $(FN) out \
+		--log-type Tail --query 'LogResult' --output text |  base64 -D
+	@cat out

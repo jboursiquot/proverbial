@@ -21,9 +21,43 @@ Resources:
           Properties:
             Path: /proverb
             Method: GET
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+
+  CheckerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: build/checker.zip
+      Handler: checker
+      Runtime: go1.x
+      Tracing: Active
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref Checks
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /check
+            Method: GET
+      Environment:
         Variables:
-          PARAM1: VALUE
+          TABLE_NAME: !Ref Checks
+
+  PickerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: build/picker.zip
+      Handler: picker
+      Runtime: go1.x
+      Tracing: Active
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref Checks
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref Checks
+
+  Checks:
+    Type: AWS::Serverless::SimpleTable
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -35,6 +69,15 @@ Outputs:
   ProverbialFunction:
     Description: "Proverbs Lambda Function ARN"
     Value: !GetAtt ProverbialFunction.Arn
+  ChechkerAPI:
+    Description: "Check an endpoint for its ability to serve proverbs"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/check"
+  CheckerFunction:
+    Description: "Checker Lambda Function ARN"
+    Value: !GetAtt CheckerFunction.Arn
+  PickerFunction:
+    Description: "Picker Lambda Function ARN"
+    Value: !GetAtt PickerFunction.Arn
   ProverbialFunctionIamRole:
     Description: "Implicit IAM Role created for Proverbial function"
     Value: !GetAtt ProverbialFunctionRole.Arn
